@@ -1,0 +1,42 @@
+
+body {
+    font-family: 'Helvetica Neue', Helvetica, sans-serif;
+    background: url("https://daks2k3a4ib2z.cloudfront.net/58fd371467a8320d4f29aed3/59374c6d73e0d361f5162b74_northern-lights-cropped.jpg");
+    background-position: 50% 50%;
+    background-size: cover;
+    background-attachment: fixed;
+    color: #e8e8e8;
+}
+
+.main {
+    display: flex;
+    flex-direction: row;
+    max-width: 960px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.main h3 {
+    margin: 0 auto 40px;
+    text-align: center;
+    font-size: 3rem;
+}
+
+.main header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.main header img.logo {
+    height: 170px;
+    margin: 0px 20px;
+    padding-top: 20px;
+}
+
+.main header img.spectiv-text {
+    height: 190px;
+}
+

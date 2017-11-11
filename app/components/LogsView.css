@@ -1,0 +1,22 @@
+
+
+.logs .log {
+    background-color: rgba(255, 255, 255, 0.31);;
+    border-radius: 3px;
+    margin: 10px;
+    padding: 10px;
+    color: rgba(219, 222, 221, 0.82);
+}
+
+.logs .log.log-purchase .purchaser,
+.logs .log.log-purchase .transaction {
+    font-weight: 200;
+    /*font-style: italic;*/
+    /*color: #444;*/
+    font-size: 0.7rem;
+}
+
+.logs .log.log-purchase .purchaser {
+    margin-top: 10px;
+}
+

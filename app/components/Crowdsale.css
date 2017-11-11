@@ -1,0 +1,63 @@
+
+code {
+    background-color: #ececec;
+    padding: 4px;
+    border-radius: 5px;
+}
+
+hr {
+    margin: 50px 120px;
+    height: 1px;
+    border: 0;
+    background-color: #dedede;
+}
+
+.crowdsale {
+    margin: 0 auto;
+    font-family: 'Helvetica Neue', Helvetica, sans-serif;
+}
+
+.crowdsale .sections {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 960px;
+}
+
+.crowdsale .sections .block {
+    width: 300px;
+    flex-shrink: 0;
+    flex-grow: 0;
+    margin: 25px;
+}
+
+.crowdsale .sections .block.progress-raise-meter {
+    width: 600px;
+}
+
+.crowdsale .sections .block.progress-raise-stats {
+    text-align: right;
+}
+
+.crowdsale .sections .block.buy-tokens {
+    flex-grow: 1;
+    background-color: white;
+    background-color: white;
+    padding: 20px 50px 40px;
+    box-shadow: 1px 1px 3px 3px rgba(0, 0, 0, 0.2);
+    color: black;
+}
+
+.crowdsale .sections .block.buy-tokens .form-buy-tokens {
+    margin-top: 15px;
+}
+
+.crowdsale .sections .block.logs-view h4 {
+    text-align: center;
+}
+
+.crowdsale .sections .block.logs-view .logs {
+    max-height: 300px;
+    overflow-y: scroll;
+}
+
