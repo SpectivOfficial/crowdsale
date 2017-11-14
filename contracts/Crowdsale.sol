@@ -3,7 +3,6 @@ pragma solidity ^0.4.15;
 import './SigToken.sol';
 import './SafeMath.sol';
 import './Ownable.sol';
-// import './oraclizeAPI.sol';
 
 
 contract Crowdsale is Ownable
@@ -17,8 +16,12 @@ contract Crowdsale is Ownable
     uint public ethMin;
     uint public ethMax;
     address public multisigWallet;
+    uint public level1StartBlock;
+    uint public level2StartBlock;
+    uint public level3StartBlock;
+    uint public level4StartBlock;
 
-    uint public ethUSD;
+    uint constant SIGS_PER_ETH = 650;
 
     bool public isHalted;
     bool public isFinalized;
@@ -26,39 +29,59 @@ contract Crowdsale is Ownable
 
     enum State { Unstarted, Started, Succeeded, Failed, Finalized }
 
-    event LogPurchase(address purchaser, uint eth, uint sigs);
+    event LogPurchase(address purchaser, uint eth, uint baseSigs, uint bonusSigs);
+    event LogPresalePurchase(address purchaser, uint sigs);
     event LogHaltCrowdsale();
     event LogUnhaltCrowdsale();
     event LogWithdrawAfterFailure(address purchaser, uint amount);
     event LogFinalizeCrowdsale(uint finalRaise);
+    event LogSetMultisigWallet(address oldWallet, address newWallet);
 
-    function Crowdsale(uint _startBlock, uint _endBlock, uint _ethMin, uint _ethMax, address _multisigWallet)
+    function Crowdsale(uint _startBlock, uint _endBlock, uint _ethMin, uint _ethMax, address _multisigWallet, uint _level1StartBlock, uint _level2StartBlock, uint _level3StartBlock, uint _level4StartBlock)
         Ownable(msg.sender)
     {
         require(_startBlock > block.number);
-        require(_endBlock > _startBlock);
+        require(_level1StartBlock > _startBlock);
+        require(_level2StartBlock > _level1StartBlock);
+        require(_level3StartBlock > _level2StartBlock);
+        require(_level4StartBlock > _level3StartBlock);
+        require(_endBlock > _level4StartBlock);
         require(_ethMin > 0);
         require(_ethMax > _ethMin);
-        require(_multisigWallet != 0);
+        require(_multisigWallet != 0x0);
 
         startBlock = _startBlock;
         endBlock = _endBlock;
         ethMin = _ethMin;
         ethMax = _ethMax;
         multisigWallet = _multisigWallet;
+        level1StartBlock = _level1StartBlock;
+        level2StartBlock = _level2StartBlock;
+        level3StartBlock = _level3StartBlock;
+        level4StartBlock = _level4StartBlock;
 
         // deploy token contract
         tokenContract = new SigToken();
-
-        // mint pre-sale tokens
-        tokenContract.mintTokens(0xdeadbeef, 123);
     }
 
-    function wasteTime() {}
+    // this function exists because companies like Parity exist
+    function setMultisigWallet(address _multisigWallet)
+        onlyOwner
+        returns (bool)
+    {
+        address oldWallet = multisigWallet;
+        multisigWallet = _multisigWallet;
+
+        LogSetMultisigWallet(oldWallet, multisigWallet);
+        return true;
+    }
+
+    // this is used by the frontend when we're running in a dev environment with TestRPC in deterministic mining mode
+    // function wasteTime() {}
 
     function buyTokens()
         payable
-        returns (bool success)
+        returns (bool)
     {
         require(getState() == State.Started);
         require(isHalted == false);
@@ -67,45 +90,53 @@ contract Crowdsale is Ownable
 
         contributions[msg.sender] += msg.value;
 
-        uint numSigs = numSigsToMint(msg.value);
+        uint baseSigs;
+        uint totalSigs;
+        (baseSigs, totalSigs) = numSigsToMint(msg.value);
 
-        bool ok = tokenContract.mintTokens(msg.sender, numSigs);
+        bool ok = tokenContract.mintTokens(msg.sender, totalSigs);
         assert(ok);
 
-        LogPurchase(msg.sender, msg.value, numSigs);
+        LogPurchase(msg.sender, msg.value, baseSigs, totalSigs - baseSigs);
         return true;
     }
 
-    uint constant SIGS_PER_ETH = 400;
-    uint constant LEVEL_1_BONUS_THRESHOLD = 10000 ether;
-    uint constant LEVEL_2_BONUS_THRESHOLD = 50000 ether;
-    uint constant LEVEL_3_BONUS_THRESHOLD = 125000 ether;
+    function mintPresaleTokens(address buyer, uint numSigs)
+        onlyOwner
+        returns (bool)
+    {
+        State state = getState();
+        require(state == State.Unstarted || state == State.Started || state == State.Succeeded);
 
-    // function updatePrice() {
-    //     require(oraclize_getPrice("URL") < msg.value);
+        bool ok = tokenContract.mintTokens(buyer, numSigs);
+        assert(ok);
 
-    //     oraclize_query("URL", "json(https://api.kraken.com/0/public/Ticker?pair=ETHUSD).result.XETHZUSD.c.0");
-    // }
+        LogPresalePurchase(buyer, numSigs);
+        return true;
+    }
+
 
     function numSigsToMint(uint numWei)
         constant
-        returns (uint)
+        returns (uint base, uint total)
     {
         uint sigsBase = SIGS_PER_ETH.safeMul(numWei).safeDiv(10 ** 18);
 
-        if (this.balance <= LEVEL_1_BONUS_THRESHOLD) {
-            return sigsBase.safeMul(140).safeDiv(100);
-        } else if (this.balance <= LEVEL_2_BONUS_THRESHOLD) {
-            return sigsBase.safeMul(125).safeDiv(100);
-        } else if (this.balance <= LEVEL_3_BONUS_THRESHOLD) {
-            return sigsBase.safeMul(115).safeDiv(100);
+        if (block.number < level1StartBlock) {
+            return (sigsBase, sigsBase.safeMul(160).safeDiv(100));
+        } else if (block.number < level2StartBlock) {
+            return (sigsBase, sigsBase.safeMul(140).safeDiv(100));
+        } else if (block.number < level3StartBlock) {
+            return (sigsBase, sigsBase.safeMul(125).safeDiv(100));
+        } else if (block.number < level4StartBlock) {
+            return (sigsBase, sigsBase.safeMul(115).safeDiv(100));
         } else {
-            return sigsBase;
+            return (sigsBase, sigsBase);
         }
     }
 
     function withdrawAfterFailure()
-        returns (bool success)
+        returns (bool)
     {
         require(getState() == State.Failed);
 
@@ -122,7 +153,7 @@ contract Crowdsale is Ownable
 
     function finalizeCrowdsale()
         onlyOwner
-        returns (bool success)
+        returns (bool)
     {
         require(getState() == State.Succeeded);
 
@@ -149,7 +180,7 @@ contract Crowdsale is Ownable
 
     function haltCrowdsale()
         onlyOwner
-        returns (bool success)
+        returns (bool)
     {
         isHalted = true;
         LogHaltCrowdsale();
@@ -158,7 +189,7 @@ contract Crowdsale is Ownable
 
     function unhaltCrowdsale()
         onlyOwner
-        returns (bool success)
+        returns (bool)
     {
         isHalted = false;
         LogUnhaltCrowdsale();
