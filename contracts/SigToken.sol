@@ -4,16 +4,6 @@ import "./UpgradeableToken.sol";
 import "./MintableToken.sol";
 
 
-/**
-  * Centrally issued Ethereum token.
-  *
-  * We mix in mintable and upgradeable traits.
-  *
-  * Token supply is created in the token contract creation and allocated to owner.
-  * The owner can then transfer from its supply to crowdsale participants.
-  * The owner, or anybody, can burn any excessive tokens they are holding.
-  *
-  */
 contract SigToken is UpgradeableToken, MintableToken
 {
     string public name = "Signals";
@@ -24,10 +14,15 @@ contract SigToken is UpgradeableToken, MintableToken
         UpgradeableToken(msg.sender)
         MintableToken(msg.sender)
     {
+        crowdsaleContract = msg.sender;
         totalSupply = 0; // we mint during the crowdsale, so totalSupply must start at 0
     }
 
-    /* Approves and then calls the receiving contract */
+    /**
+     * ERC20 approveAndCall extension
+     *
+     * Approves and then calls the receiving contract
+     */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);

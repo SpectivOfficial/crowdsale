@@ -13,19 +13,22 @@ contract Crowdsale is Ownable
 
     uint public startBlock;
     uint public endBlock;
-    uint public ethMin;
-    uint public ethMax;
+    uint public ethMin; // this is denominated in wei
+    uint public ethMax; // this is denominated in wei
     address public multisigWallet;
     uint public level1StartBlock;
     uint public level2StartBlock;
     uint public level3StartBlock;
     uint public level4StartBlock;
 
-    uint constant SIGS_PER_ETH = 650;
+    uint public sigsPerETH = 650;
 
     bool public isHalted;
     bool public isFinalized;
     mapping(address => uint) public contributions;
+
+    // minimum contribution amount
+    uint constant dust = 1 finney;
 
     enum State { Unstarted, Started, Succeeded, Failed, Finalized }
 
@@ -33,6 +36,7 @@ contract Crowdsale is Ownable
     event LogPresalePurchase(address purchaser, uint sigs);
     event LogHaltCrowdsale();
     event LogUnhaltCrowdsale();
+    event LogSetSigsPerETH(uint oldRate, uint newRate);
     event LogWithdrawAfterFailure(address purchaser, uint amount);
     event LogFinalizeCrowdsale(uint finalRaise);
     event LogSetMultisigWallet(address oldWallet, address newWallet);
@@ -64,7 +68,8 @@ contract Crowdsale is Ownable
         tokenContract = new SigToken();
     }
 
-    // this function exists because companies like Parity exist
+    // This function exists because companies like Parity exist.  We want to retain the ability to
+    // discard a broken multisig wallet as late in the game as possible before finalizing the crowdsale.
     function setMultisigWallet(address _multisigWallet)
         onlyOwner
         returns (bool)
@@ -76,19 +81,34 @@ contract Crowdsale is Ownable
         return true;
     }
 
-    // this is used by the frontend when we're running in a dev environment with TestRPC in deterministic mining mode
+    // We allow changing the SIG/ETH exchange rate up until the crowdsale starts in case of huge
+    // swings in ETH's market price.  Once the sale starts, the price is fixed.
+    function setSigsPerETH(uint _sigsPerETH)
+        onlyOwner
+        returns (bool)
+    {
+        require(getState() == State.Unstarted);
+
+        uint old = sigsPerETH;
+        sigsPerETH = _sigsPerETH;
+
+        LogSetSigsPerETH(old, sigsPerETH);
+        return true;
+    }
+
+    // This is used by the frontend when we're running in a dev environment with TestRPC in deterministic mining mode
     // function wasteTime() {}
 
-    function buyTokens()
+    // Buy tokens with the fallback function.
+    function()
         payable
-        returns (bool)
     {
         require(getState() == State.Started);
         require(isHalted == false);
         require(this.balance <= ethMax);
-        require(msg.value > 0);
+        require(msg.value > dust);
 
-        contributions[msg.sender] += msg.value;
+        contributions[msg.sender] = contributions[msg.sender].safeAdd(msg.value);
 
         uint baseSigs;
         uint totalSigs;
@@ -97,10 +117,10 @@ contract Crowdsale is Ownable
         bool ok = tokenContract.mintTokens(msg.sender, totalSigs);
         assert(ok);
 
-        LogPurchase(msg.sender, msg.value, baseSigs, totalSigs - baseSigs);
-        return true;
+        LogPurchase(msg.sender, msg.value, baseSigs, totalSigs.safeSub(baseSigs));
     }
 
+    // We allow presale buyers to be added by the Spectiv team up until the crowdsale is finished.
     function mintPresaleTokens(address buyer, uint numSigs)
         onlyOwner
         returns (bool)
@@ -120,16 +140,21 @@ contract Crowdsale is Ownable
         constant
         returns (uint base, uint total)
     {
-        uint sigsBase = SIGS_PER_ETH.safeMul(numWei).safeDiv(10 ** 18);
+        uint sigsBase = sigsPerETH.safeMul(numWei).safeDiv(10 ** 18);
 
+        // Crowdsale starts with early bird participants who get a 60% bonus.  This precedes "level 1".
         if (block.number < level1StartBlock) {
             return (sigsBase, sigsBase.safeMul(160).safeDiv(100));
+        // Level 1 participats get a 40% bonus.
         } else if (block.number < level2StartBlock) {
             return (sigsBase, sigsBase.safeMul(140).safeDiv(100));
+        // Level 2 participats get a 25% bonus.
         } else if (block.number < level3StartBlock) {
             return (sigsBase, sigsBase.safeMul(125).safeDiv(100));
+        // Level 3 participats get a 15% bonus.
         } else if (block.number < level4StartBlock) {
             return (sigsBase, sigsBase.safeMul(115).safeDiv(100));
+        // Level 4 participats get what they pay for.
         } else {
             return (sigsBase, sigsBase);
         }
@@ -151,6 +176,13 @@ contract Crowdsale is Ownable
         return true;
     }
 
+    // This should only be called 1) upon successful completion of the crowdsale, and 2) once the legal
+    // audit has been completed.  This function:
+    // - mints the final 40% of tokens
+    // - prevents future minting
+    // - allows `owner` to initiate an upgrade to a new token contract
+    // - permits users to transfer tokens, and...
+    // - transfers the ETH balance from this contract to the multisig wallet.
     function finalizeCrowdsale()
         onlyOwner
         returns (bool)
@@ -170,6 +202,9 @@ contract Crowdsale is Ownable
 
         // upgrading to a new token contract is controlled by owner
         tokenContract.setUpgradeMaster(owner);
+
+        // allow tokens to be traded
+        tokenContract.setTokensaleCompleted();
 
         // move all funds to the multisig wallet
         multisigWallet.transfer(this.balance);

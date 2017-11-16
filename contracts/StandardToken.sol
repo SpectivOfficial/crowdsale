@@ -15,7 +15,10 @@ contract StandardToken is ERC20
     using SafeMath for uint;
 
     mapping(address => uint) balances;
-    mapping (address => mapping (address => uint)) allowed;
+    mapping(address => mapping (address => uint)) allowed;
+
+    address public crowdsaleContract;
+    bool public tokensaleCompleted;
 
     // Interface marker
     bool public constant isToken = true;
@@ -30,10 +33,20 @@ contract StandardToken is ERC20
         _;
     }
 
+    // This is called to unlock tokens once the tokensale (and subsequent audit + legal process) are
+    // completed.  We don't want people buying tokens during the sale and then immediately starting
+    // to trade them.  See Crowdsale::finalizeCrowdsale().
+    function setTokensaleCompleted() {
+        require(msg.sender == crowdsaleContract);
+        tokensaleCompleted = true;
+    }
+
     function transfer(address _to, uint _value)
         onlyPayloadSize(2 * 32)
         returns (bool success)
     {
+        require(tokensaleCompleted);
+
         balances[msg.sender] = balances[msg.sender].safeSub(_value);
         balances[_to] = balances[_to].safeAdd(_value);
 
@@ -44,9 +57,11 @@ contract StandardToken is ERC20
     function transferFrom(address from, address to, uint value)
         returns (bool success)
     {
+        require(tokensaleCompleted);
+
         uint _allowance = allowed[from][msg.sender];
 
-        // Check is not needed because safeSub(_allowance, value) will already throw if this condition is not met
+        // Check is not needed because _allowance.safeSub(value) will throw if this condition is not met
         // if (value > _allowance) throw;
 
         balances[to] = balances[to].safeAdd(value);
@@ -67,6 +82,8 @@ contract StandardToken is ERC20
     function approve(address spender, uint value)
         returns (bool success)
     {
+        require(tokensaleCompleted);
+
         // To change the approve amount you first have to reduce the addresses`
         //  allowance to zero by calling `approve(spender, 0)` if it is not
         //  already 0 to mitigate the race condition described here:
