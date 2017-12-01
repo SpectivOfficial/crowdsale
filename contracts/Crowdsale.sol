@@ -139,7 +139,7 @@ contract Crowdsale is Ownable
     // We allow presale buyers to be added by the Spectiv team up until the crowdsale is finished.
     function mintPresaleTokens(address buyer, uint numSigs)
         onlyOwner
-        returns (bool ok)
+        returns (bool)
     {
         State state = getState();
         require(state == State.Unstarted || state == State.Started || state == State.Succeeded);
