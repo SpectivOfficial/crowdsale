@@ -88,15 +88,15 @@ contract UpgradeableToken is StandardToken
     }
 
     /**
-      * Set an upgrade agent that handles
+      * Set an upgrade targget that handles the process of letting users opt-in to the new token contract.
       */
-    function setUpgradeTarget(address agent) external {
+    function setUpgradeTarget(address target) external {
         require(canUpgrade());
-        require(agent != 0x0);
-        require(msg.sender == upgradeMaster); // Only a master can designate the next agent
+        require(target != 0x0);
+        require(msg.sender == upgradeMaster); // Only a master can designate the next target
         require(getUpgradeState() != UpgradeState.Upgrading); // Upgrade has already begun
 
-        upgradeTarget = UpgradeTarget(agent);
+        upgradeTarget = UpgradeTarget(target);
 
         require(upgradeTarget.isUpgradeTarget()); // Bad interface
         require(upgradeTarget.originalSupply() == totalSupply); // Make sure that token supplies match in source and target

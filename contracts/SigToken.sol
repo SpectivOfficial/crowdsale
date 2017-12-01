@@ -10,12 +10,46 @@ contract SigToken is UpgradeableToken, MintableToken
     string public symbol = "SIG";
     uint public decimals = 18;
 
+    address public crowdsaleContract;
+    bool public tokensaleCompleted;
+
     function SigToken()
         UpgradeableToken(msg.sender)
         MintableToken(msg.sender)
     {
         crowdsaleContract = msg.sender;
         totalSupply = 0; // we mint during the crowdsale, so totalSupply must start at 0
+    }
+
+    function transfer(address _to, uint _value)
+        returns (bool success)
+    {
+        require(tokensaleCompleted);
+        return StandardToken.transfer(_to, _value);
+    }
+
+    function transferFrom(address from, address to, uint value)
+        returns (bool success)
+    {
+        require(tokensaleCompleted);
+        return StandardToken.transferFrom(from, to, value);
+    }
+
+    function approve(address spender, uint value)
+        returns (bool success)
+    {
+        require(tokensaleCompleted);
+        return StandardToken.approve(spender, value);
+    }
+
+    // This is called to unlock tokens once the crowdsale (and subsequent audit + legal process) are
+    // completed.  We don't want people buying tokens during the sale and then immediately starting
+    // to trade them.  See Crowdsale::finalizeCrowdsale().
+    function setTokensaleCompleted() {
+        require(msg.sender == crowdsaleContract);
+        require(tokensaleCompleted == false);
+
+        tokensaleCompleted = true;
     }
 
     /**
