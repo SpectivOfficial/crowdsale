@@ -37,6 +37,7 @@ contract MintableToken is StandardToken
         totalSupply = totalSupply.safeAdd(amount);
 
         LogMintTokens(recipient, amount, balances[recipient], totalSupply);
+        Transfer(address(0), recipient, amount);
         return true;
     }
 
