@@ -244,7 +244,7 @@ contract Crowdsale is Ownable
         tokenContract.setUpgradeMaster(owner);
 
         // allow tokens to be traded
-        tokenContract.setTokensaleCompleted();
+        tokenContract.setCrowdsaleCompleted();
 
         uint finalRaise = this.balance;
         // move all funds to the multisig wallet
