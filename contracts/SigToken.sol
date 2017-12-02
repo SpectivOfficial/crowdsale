@@ -57,7 +57,12 @@ contract SigToken is UpgradeableToken, MintableToken
      *
      * Approves and then calls the receiving contract
      */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+        public
+        returns (bool success)
+    {
+        require(crowdsaleCompleted);
+
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
 
