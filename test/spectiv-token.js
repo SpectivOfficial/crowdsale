@@ -168,7 +168,7 @@ contract(`SigToken`, accounts => {
             const amount = 100
 
             await sigToken.mintTokens(admin, amount, { from: admin })
-            await sigToken.setTokensaleCompleted({ from: admin })
+            await sigToken.setCrowdsaleCompleted({ from: admin })
             await expectThrow( sigToken.transfer(recipient, amount + 1, { from: admin }) )
         })
 
@@ -178,7 +178,7 @@ contract(`SigToken`, accounts => {
                 const amount = 100
 
                 await sigToken.mintTokens(admin, amount, { from: admin })
-                await sigToken.setTokensaleCompleted({ from: admin })
+                await sigToken.setCrowdsaleCompleted({ from: admin })
 
                 let adminBalance = await sigToken.balanceOf(admin)
                 assert.equal(adminBalance, amount)
@@ -206,7 +206,7 @@ contract(`SigToken`, accounts => {
         })
 
         it(`should throw if a nonzero approval/allowance has already been made and not redemeed`, async () => {
-            await sigToken.setTokensaleCompleted({ from: admin })
+            await sigToken.setCrowdsaleCompleted({ from: admin })
             await sigToken.approve(accounts[1], 123, { from: admin })
             await expectThrow( sigToken.approve(accounts[1], 123, { from: admin }) )
         })
@@ -215,7 +215,7 @@ contract(`SigToken`, accounts => {
             it(`should set .allowed[sender][spender] to value`, async () => {
                 const value = 123
 
-                await sigToken.setTokensaleCompleted({ from: admin })
+                await sigToken.setCrowdsaleCompleted({ from: admin })
                 await sigToken.approve(accounts[1], value, { from: admin })
 
                 const allowance = await sigToken.allowance(admin, accounts[1])
@@ -234,13 +234,13 @@ contract(`SigToken`, accounts => {
 
         it(`should throw if no amount has been approved`, async () => {
             await sigToken.mintTokens(admin, 100, { from: admin })
-            await sigToken.setTokensaleCompleted({ from: admin })
+            await sigToken.setCrowdsaleCompleted({ from: admin })
             await expectThrow( sigToken.transferFrom(admin, recipient, 1, { from: admin }) )
         })
 
         it(`should throw if too small an amount has been approved`, async () => {
             await sigToken.mintTokens(admin, 100, { from: admin })
-            await sigToken.setTokensaleCompleted({ from: admin })
+            await sigToken.setCrowdsaleCompleted({ from: admin })
             await sigToken.approve(recipient, amount, { from: admin })
             await expectThrow( sigToken.transferFrom(admin, recipient, amount + 1, { from: accounts[2] }) )
         })
@@ -248,7 +248,7 @@ contract(`SigToken`, accounts => {
         describe(`when called after the crowdsale is completed with an amount that has been approved`, () => {
             it(`should transfer tokens from one account to another`, async () => {
                 await sigToken.mintTokens(admin, 100, { from: admin })
-                await sigToken.setTokensaleCompleted({ from: admin })
+                await sigToken.setCrowdsaleCompleted({ from: admin })
 
                 let adminBalance = await sigToken.balanceOf(admin)
                 assert.equal(adminBalance, 100)

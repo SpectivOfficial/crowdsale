@@ -1,3 +1,4 @@
+let { wait, waitUntilBlock } = require('@digix/tempo')(web3)
 
 module.exports.expectThrow = async (promise) => {
     try {
@@ -23,3 +24,7 @@ module.exports.expectThrow = async (promise) => {
     assert.fail('Expected throw not received')
 }
 
+module.exports.waitUntilTime = async (time) => {
+    let prevTime = (await web3.eth.getBlockPromise('latest')).timestamp
+    await wait(time - prevTime, 1)
+}
