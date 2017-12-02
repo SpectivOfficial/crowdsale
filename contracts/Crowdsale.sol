@@ -102,6 +102,7 @@ contract Crowdsale is Ownable
         onlyOwner
         returns (bool ok)
     {
+        require(_sigsPerETH > 0);
         require(getState() == State.Unstarted);
 
         uint old = sigsPerETH;
