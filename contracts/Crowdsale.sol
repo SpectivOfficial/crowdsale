@@ -122,7 +122,6 @@ contract Crowdsale is Ownable
         require(address(tokenContract) != 0x0);
         require(getState() == State.Started);
         require(isHalted == false);
-        require(this.balance <= ethMax);
         require(msg.value >= dust);
 
         contributions[msg.sender] = contributions[msg.sender].safeAdd(msg.value);
