@@ -8,7 +8,7 @@ contract SigToken is UpgradeableToken, MintableToken
 {
     string public name = "Signals";
     string public symbol = "SIG";
-    uint public decimals = 18;
+    uint8 public decimals = 18;
 
     address public crowdsaleContract;
     bool public tokensaleCompleted;
