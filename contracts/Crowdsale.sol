@@ -166,16 +166,16 @@ contract Crowdsale is Ownable
         // Crowdsale starts with early bird participants who get a 60% bonus.  This precedes "level 1".
         if (block.timestamp < level1StartTime) {
             return (sigsBase, sigsBase.safeMul(160).safeDiv(100));
-        // Level 1 participats get a 40% bonus.
+        // Level 1 participants get a 40% bonus.
         } else if (block.timestamp < level2StartTime) {
             return (sigsBase, sigsBase.safeMul(140).safeDiv(100));
-        // Level 2 participats get a 25% bonus.
+        // Level 2 participants get a 25% bonus.
         } else if (block.timestamp < level3StartTime) {
             return (sigsBase, sigsBase.safeMul(125).safeDiv(100));
-        // Level 3 participats get a 15% bonus.
+        // Level 3 participants get a 15% bonus.
         } else if (block.timestamp < level4StartTime) {
             return (sigsBase, sigsBase.safeMul(115).safeDiv(100));
-        // Level 4 participats get what they pay for.
+        // Level 4 participants get what they pay for.
         } else {
             return (sigsBase, sigsBase);
         }
