@@ -156,7 +156,7 @@ contract Crowdsale is Ownable
         constant
         returns (uint base, uint total)
     {
-        uint sigsBase = sigsPerETH.safeMul(numWei).safeDiv(10 ** 18);
+        uint sigsBase = sigsPerETH.safeMul(numWei);
 
         // people who contribute more than 20 ETH get a 20% bonus
         if (numWei >= 20 ether) {
