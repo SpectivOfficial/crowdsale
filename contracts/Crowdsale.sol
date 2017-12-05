@@ -174,7 +174,7 @@ contract Crowdsale is Ownable
             return (sigsBase, sigsBase.safeMul(125).safeDiv(100));
         // Level 3 participants get a 15% bonus.
         } else if (block.timestamp < level4StartTime) {
-            return (sigsBase, sigsBase.safeMul(115).safeDiv(100));
+            return (sigsBase, sigsBase.safeMul(110).safeDiv(100));
         // Level 4 participants get what they pay for.
         } else {
             return (sigsBase, sigsBase);
