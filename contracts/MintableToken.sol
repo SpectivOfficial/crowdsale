@@ -52,6 +52,7 @@ contract MintableToken is StandardToken
         totalSupply = totalSupply.safeSub(amount);
 
         LogUnmintTokens(hodler, amount, balances[hodler], totalSupply);
+        Transfer(hodler, address(0), amount);
         return true;
     }
 }

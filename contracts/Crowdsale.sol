@@ -21,7 +21,7 @@ contract Crowdsale is Ownable
     uint public level3StartTime;
     uint public level4StartTime;
 
-    uint public sigsPerETH = 650;
+    uint public sigsPerETH = 950;
 
     bool public isHalted;
     bool public isFinalized;
@@ -158,26 +158,27 @@ contract Crowdsale is Ownable
     {
         uint sigsBase = sigsPerETH.safeMul(numWei);
 
-        // people who contribute more than 20 ETH get a 20% bonus
+        // people who contribute more than 20 ETH get an extra 20% bonus
+        uint extraBonus = 100;
         if (numWei >= 20 ether) {
-            sigsBase = sigsBase.safeMul(120).safeDiv(100);
+            extraBonus = 120;
         }
 
         // Crowdsale starts with early bird participants who get a 60% bonus.  This precedes "level 1".
         if (block.timestamp < level1StartTime) {
-            return (sigsBase, sigsBase.safeMul(160).safeDiv(100));
+            return (sigsBase, sigsBase.safeMul(extraBonus + 60).safeDiv(100));
         // Level 1 participants get a 40% bonus.
         } else if (block.timestamp < level2StartTime) {
-            return (sigsBase, sigsBase.safeMul(140).safeDiv(100));
+            return (sigsBase, sigsBase.safeMul(extraBonus + 40).safeDiv(100));
         // Level 2 participants get a 25% bonus.
         } else if (block.timestamp < level3StartTime) {
-            return (sigsBase, sigsBase.safeMul(125).safeDiv(100));
-        // Level 3 participants get a 15% bonus.
+            return (sigsBase, sigsBase.safeMul(extraBonus + 25).safeDiv(100));
+        // Level 3 participants get a 10% bonus.
         } else if (block.timestamp < level4StartTime) {
-            return (sigsBase, sigsBase.safeMul(110).safeDiv(100));
+            return (sigsBase, sigsBase.safeMul(extraBonus + 10).safeDiv(100));
         // Level 4 participants get what they pay for.
         } else {
-            return (sigsBase, sigsBase);
+            return (sigsBase, sigsBase.safeMul(extraBonus).safeDiv(100));
         }
     }
 
@@ -235,7 +236,7 @@ contract Crowdsale is Ownable
         uint totalSupply = tokenContract.totalSupply();
 
         // mint the other 40% of the supply, which go to the platform reserve, management team, advisors, and bounty participants
-        tokenContract.mintTokens(multisigWallet, totalSupply.safeMul(2).safeDiv(3));
+        tokenContract.mintTokens(owner, totalSupply.safeMul(2).safeDiv(3));
 
         // nobody can ever mint tokens again
         tokenContract.setMintMaster(0x0);
